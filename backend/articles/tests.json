@@ -1,0 +1,40 @@
+{
+  "tests": [
+    {
+      "name": "Get all articles",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Get article by id",
+      "method": "GET",
+      "path": "/?id=1",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Add comment",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "comment",
+        "article_id": 1,
+        "author": "Test User",
+        "content": "Great article!"
+      },
+      "expectedStatus": 201
+    },
+    {
+      "name": "Add rating",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "rate",
+        "article_id": 1,
+        "user_id": "test123",
+        "rating": 5
+      },
+      "expectedStatus": 200
+    }
+  ]
+}

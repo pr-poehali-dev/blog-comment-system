@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,103 +7,37 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
+import { api, type Article } from '@/lib/api';
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Все');
   const [authOpen, setAuthOpen] = useState(false);
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const categories = ['Все', 'Дизайн', 'Разработка', 'Маркетинг', 'Бизнес'];
 
-  const articles = [
-    {
-      id: 1,
-      title: 'Минимализм в веб-дизайне: искусство создания чистых интерфейсов',
-      excerpt:
-        'Узнайте, как использовать минималистичный подход для создания элегантных и функциональных веб-сайтов.',
-      category: 'Дизайн',
-      author: 'Александр Иванов',
-      date: '20 ноября 2025',
-      readTime: '8 мин',
-      image: '/placeholder.svg',
-      rating: 4.5,
-      comments: 12,
-    },
-    {
-      id: 2,
-      title: 'React Hooks: полное руководство для начинающих',
-      excerpt:
-        'Погрузитесь в мир React Hooks и научитесь писать более чистый и эффективный код.',
-      category: 'Разработка',
-      author: 'Мария Смирнова',
-      date: '18 ноября 2025',
-      readTime: '12 мин',
-      image: '/placeholder.svg',
-      rating: 4.8,
-      comments: 24,
-    },
-    {
-      id: 3,
-      title: 'SEO в 2025: стратегии продвижения нового поколения',
-      excerpt:
-        'Актуальные методы SEO-оптимизации и продвижения сайтов в современных поисковых системах.',
-      category: 'Маркетинг',
-      author: 'Дмитрий Козлов',
-      date: '15 ноября 2025',
-      readTime: '10 мин',
-      image: '/placeholder.svg',
-      rating: 4.3,
-      comments: 8,
-    },
-    {
-      id: 4,
-      title: 'Типографика в веб-дизайне: выбор шрифтов и создание иерархии',
-      excerpt:
-        'Как правильно подобрать шрифты и создать визуальную иерархию для улучшения читабельности.',
-      category: 'Дизайн',
-      author: 'Елена Волкова',
-      date: '12 ноября 2025',
-      readTime: '6 мин',
-      image: '/placeholder.svg',
-      rating: 4.6,
-      comments: 15,
-    },
-    {
-      id: 5,
-      title: 'Создание API на Node.js: от идеи до продакшена',
-      excerpt:
-        'Пошаговое руководство по разработке масштабируемого RESTful API с использованием Node.js.',
-      category: 'Разработка',
-      author: 'Игорь Петров',
-      date: '10 ноября 2025',
-      readTime: '15 мин',
-      image: '/placeholder.svg',
-      rating: 4.9,
-      comments: 31,
-    },
-    {
-      id: 6,
-      title: 'Email-маркетинг: как увеличить конверсию в 3 раза',
-      excerpt:
-        'Проверенные стратегии и тактики для повышения эффективности email-рассылок.',
-      category: 'Маркетинг',
-      author: 'Ольга Соколова',
-      date: '8 ноября 2025',
-      readTime: '9 мин',
-      image: '/placeholder.svg',
-      rating: 4.4,
-      comments: 19,
-    },
-  ];
+  useEffect(() => {
+    loadArticles();
+  }, [selectedCategory, searchQuery]);
 
-  const filteredArticles = articles.filter((article) => {
-    const matchesSearch =
-      article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      article.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      selectedCategory === 'Все' || article.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const loadArticles = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getArticles({
+        category: selectedCategory,
+        search: searchQuery,
+      });
+      setArticles(data);
+    } catch (error) {
+      console.error('Failed to load articles:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -163,8 +97,14 @@ const Index = () => {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredArticles.map((article, index) => (
+          {loading ? (
+            <div className="text-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-4 text-muted-foreground">Загрузка статей...</p>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {articles.map((article, index) => (
               <Link
                 key={article.id}
                 to={`/article/${article.id}`}
@@ -208,10 +148,11 @@ const Index = () => {
                   </div>
                 </div>
               </Link>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
-          {filteredArticles.length === 0 && (
+          {!loading && articles.length === 0 && (
             <div className="text-center py-20">
               <Icon name="Search" size={64} className="mx-auto mb-4 text-muted-foreground" />
               <h3 className="text-2xl font-semibold mb-2">Статьи не найдены</h3>
